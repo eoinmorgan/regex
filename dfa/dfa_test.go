@@ -20,7 +20,7 @@ func TestStateAcceptsOne(t *testing.T) {
 	acceptingState := State{accepting: true}
 	startState := State{
 		accepting: false,
-		nextStates: map[byte]State{'a': acceptingState},
+		transitions: map[byte]*State{'a': &acceptingState},
 	}
 
 	if !startState.accepts([]byte{'a'}) {
@@ -32,7 +32,7 @@ func TestStateRejectsMissing(t *testing.T) {
 	acceptingState := State{accepting: true}
 	startState := State{
 		accepting: false,
-		nextStates: map[byte]State{'a': acceptingState},
+		transitions: map[byte]*State{'a': &acceptingState},
 	}
 
 	if startState.accepts([]byte{'b'}) {
@@ -44,7 +44,7 @@ func TestStateRejectsRemainingChars(t *testing.T) {
 	acceptingState := State{accepting: true}
 	startState := State{
 		accepting: false,
-		nextStates: map[byte]State{'a': acceptingState},
+		transitions: map[byte]*State{'a': &acceptingState},
 	}
 
 	if startState.accepts([]byte{'a', 'b'}) {
@@ -53,16 +53,16 @@ func TestStateRejectsRemainingChars(t *testing.T) {
 }
 
 func TestStateComplex(t *testing.T) {
-	// [a|b]c
+	// test the DFA representation of the regex "[a|b]c" as a sanity check
 
 	acceptingState := State{accepting: true}
-	bState := State{accepting: false, nextStates: map[byte]State{'c': acceptingState}}
-	aState := State{accepting: false, nextStates: map[byte]State{'c': acceptingState}}
+	bState := State{accepting: false, transitions: map[byte]*State{'c': &acceptingState}}
+	aState := State{accepting: false, transitions: map[byte]*State{'c': &acceptingState}}
 	startState := State{
 		accepting: false,
-		nextStates: map[byte]State{
-			'a': aState,
-			'b': bState,
+		transitions: map[byte]*State{
+			'a': &aState,
+			'b': &bState,
 		},
 	}
 
@@ -79,6 +79,10 @@ func TestStateComplex(t *testing.T) {
 	}
 
 	if startState.accepts([]byte{'a'}) {
+		t.Error("Expected state to reject input 'a'")
+	}
+
+	if startState.accepts([]byte{'a', 'c', 'z'}) {
 		t.Error("Expected state to reject input 'a'")
 	}
 }
